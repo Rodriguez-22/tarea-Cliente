@@ -188,18 +188,45 @@ const submitForm = () => {
 </template>
 
 <style scoped>
-.form-container { max-width: 600px; margin: 0 auto; padding: 20px; font-family: sans-serif; }
-fieldset { margin-bottom: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 8px; }
-legend { font-weight: bold; padding: 0 5px; }
+.form-container { 
+  max-width: 650px; 
+  margin: 0 auto; 
+  padding: 30px; 
+  background: var(--bg-card); 
+  border-radius: var(--radius); 
+  box-shadow: var(--shadow); 
+}
+h2 { text-align: center; color: var(--primary); margin-bottom: 30px; }
+fieldset { 
+  margin-bottom: 25px; 
+  border: 1px solid var(--border); 
+  padding: 20px; 
+  border-radius: 8px; 
+  background-color: #f9fafb;
+}
+legend { 
+  font-weight: 600; 
+  color: var(--primary); 
+  background: var(--bg-card); 
+  padding: 4px 12px; 
+  border-radius: 20px; 
+  border: 1px solid var(--border);
+}
 .input-group { margin-bottom: 15px; display: flex; flex-direction: column; }
-.synced-inputs { display: flex; gap: 10px; align-items: center; }
-.checkbox-group, .radio-group { display: flex; flex-direction: column; gap: 5px; margin-top: 5px; }
-.checkbox-terms { margin-top: 20px; font-weight: bold; }
-.text-danger { color: red; }
-.actions { display: flex; justify-content: space-between; margin-top: 20px; }
-button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-.btn-submit { background-color: #4CAF50; color: white; }
-.btn-submit:disabled { background-color: #cccccc; cursor: not-allowed; }
-.btn-clear { background-color: #f44336; color: white; }
-.summary { margin-top: 30px; padding: 15px; background: #f9f9f9; border-left: 4px solid #4CAF50; }
+label { font-weight: 500; margin-bottom: 6px; color: var(--text-main); }
+.synced-inputs { display: flex; gap: 15px; align-items: center; }
+.checkbox-group, .radio-group { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
+.checkbox-terms { margin-top: 20px; padding: 15px; background: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe; }
+.actions { display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px; }
+button { 
+  padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; 
+  font-weight: 600; font-size: 1rem; transition: transform 0.1s, opacity 0.2s; 
+}
+button:active { transform: scale(0.98); }
+.btn-submit { background-color: var(--primary); color: white; box-shadow: var(--shadow-sm); }
+.btn-submit:hover:not(:disabled) { background-color: var(--primary-hover); }
+.btn-submit:disabled { background-color: #9ca3af; cursor: not-allowed; }
+.btn-clear { background-color: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+.btn-clear:hover { background-color: #f3f4f6; color: var(--error); }
+.summary { margin-top: 30px; padding: 20px; background: #ecfdf5; border-left: 5px solid var(--success); border-radius: 0 8px 8px 0; }
 </style>
