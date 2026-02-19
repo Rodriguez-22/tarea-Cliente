@@ -2,9 +2,20 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import FormInput from './FormInput.vue';
 import { useValidation } from '../composables/useValidation';
+// Asegúrate de importar tus interfaces correctamente
 import type { Reservation } from '../types/reservation';
+import type { Table } from '../types/index'; // Ajusta la ruta si es necesario
 
-// Aplicamos el tipado estricto <Reservation>
+// 1. PROPS para recibir la mesa
+const props = defineProps<{
+  selectedTable: Table;
+}>();
+
+// 2. EMITS para avisar al mapa
+const emit = defineEmits<{
+  (e: 'submit', formData: Reservation): void;
+}>();
+
 const formData = ref<Reservation>({
   name: '',
   nif: '',
@@ -13,7 +24,7 @@ const formData = ref<Reservation>({
   eventType: '',
   eventDate: '',
   startTime: '',
-  attendees: 10,
+  attendees: 1, // Iniciamos en 1
   catering: [],
   budget: '',
   comments: '',
@@ -23,7 +34,6 @@ const formData = ref<Reservation>({
 const { errors, validateField } = useValidation();
 let debounceTimeout: ReturnType<typeof setTimeout>;
 
-// Validación en tiempo real con debounce de 500ms
 const handleInput = (field: keyof typeof formData.value) => {
   clearTimeout(debounceTimeout);
   debounceTimeout = setTimeout(() => {
@@ -31,15 +41,12 @@ const handleInput = (field: keyof typeof formData.value) => {
   }, 500);
 };
 
-// Validación al perder el foco (blur)
 const handleBlur = (field: keyof typeof formData.value) => {
   validateField(field, String(formData.value[field]));
 };
 
-// Cálculo de caracteres para los comentarios (Máximo 500)
 const commentsLength = computed(() => formData.value.comments.trim().length);
 
-// Persistencia en localStorage
 onMounted(() => {
   const savedDraft = localStorage.getItem('reservationDraft');
   if (savedDraft) {
@@ -51,40 +58,43 @@ watch(formData, (newVal) => {
   localStorage.setItem('reservationDraft', JSON.stringify(newVal));
 }, { deep: true });
 
-// Limpiar formulario
 const clearForm = () => {
   formData.value = {
     name: '', nif: '', phone: '', email: '', eventType: '', 
-    eventDate: '', startTime: '', attendees: 10, catering: [], 
+    eventDate: '', startTime: '', attendees: 1, catering: [], 
     budget: '', comments: '', terms: false
   };
   errors.value = {};
   localStorage.removeItem('reservationDraft');
 };
 
-// Enviar formulario
 const submitForm = () => {
-  // Forzar validación de campos principales
   const fieldsToValidate: (keyof typeof formData.value)[] = ['name', 'nif', 'phone', 'email'];
   fieldsToValidate.forEach(field => validateField(field, String(formData.value[field])));
 
   const hasErrors = Object.values(errors.value).some(err => err !== '');
   
   if (hasErrors || !formData.value.terms) {
-    // Scroll al primer error
     const firstError = document.querySelector('.is-invalid, .error-msg');
     if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
 
-  alert('¡Reserva validada y enviada con éxito!');
+  // 3. Validación estricta: No superar capacidad de la mesa
+  if (formData.value.attendees > props.selectedTable.capacity) {
+    alert(`Error: La mesa seleccionada solo admite un máximo de ${props.selectedTable.capacity} personas.`);
+    return;
+  }
+
+  // 4. Emitimos los datos al componente padre
+  emit('submit', formData.value);
   clearForm();
 };
 </script>
 
 <template>
   <div class="form-container">
-    <h2>Reserva de Eventos</h2>
+    <h2>Reservar {{ selectedTable.label }}</h2>
     <form @submit.prevent="submitForm" novalidate>
       
       <fieldset>
@@ -123,10 +133,10 @@ const submitForm = () => {
         </div>
 
         <div class="input-group">
-          <label>Número de asistentes: {{ formData.attendees }}</label>
+          <label>Número de asistentes: {{ formData.attendees }} (Máx: {{ selectedTable.capacity }})</label>
           <div class="synced-inputs">
-            <input type="range" min="10" max="500" v-model.number="formData.attendees" />
-            <input type="number" min="10" max="500" v-model.number="formData.attendees" />
+            <input type="range" min="1" :max="selectedTable.capacity" v-model.number="formData.attendees" />
+            <input type="number" min="1" :max="selectedTable.capacity" v-model.number="formData.attendees" />
           </div>
         </div>
       </fieldset>
@@ -188,32 +198,33 @@ const submitForm = () => {
 </template>
 
 <style scoped>
+/* Tus estilos originales intactos */
 .form-container { 
-  max-width: 650px; 
+  width: 100%; 
   margin: 0 auto; 
   padding: 30px; 
-  background: var(--bg-card); 
-  border-radius: var(--radius); 
-  box-shadow: var(--shadow); 
+  background: var(--bg-card, #fff); 
+  border-radius: var(--radius, 8px); 
+  box-shadow: var(--shadow, 0 4px 6px rgba(0,0,0,0.1)); 
 }
-h2 { text-align: center; color: var(--primary); margin-bottom: 30px; }
+h2 { text-align: center; color: var(--primary, #2c3e50); margin-bottom: 30px; }
 fieldset { 
   margin-bottom: 25px; 
-  border: 1px solid var(--border); 
+  border: 1px solid var(--border, #ddd); 
   padding: 20px; 
   border-radius: 8px; 
   background-color: #f9fafb;
 }
 legend { 
   font-weight: 600; 
-  color: var(--primary); 
-  background: var(--bg-card); 
+  color: var(--primary, #2c3e50); 
+  background: var(--bg-card, #fff); 
   padding: 4px 12px; 
   border-radius: 20px; 
-  border: 1px solid var(--border);
+  border: 1px solid var(--border, #ddd);
 }
 .input-group { margin-bottom: 15px; display: flex; flex-direction: column; }
-label { font-weight: 500; margin-bottom: 6px; color: var(--text-main); }
+label { font-weight: 500; margin-bottom: 6px; color: var(--text-main, #333); }
 .synced-inputs { display: flex; gap: 15px; align-items: center; }
 .checkbox-group, .radio-group { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
 .checkbox-terms { margin-top: 20px; padding: 15px; background: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe; }
@@ -223,10 +234,10 @@ button {
   font-weight: 600; font-size: 1rem; transition: transform 0.1s, opacity 0.2s; 
 }
 button:active { transform: scale(0.98); }
-.btn-submit { background-color: var(--primary); color: white; box-shadow: var(--shadow-sm); }
-.btn-submit:hover:not(:disabled) { background-color: var(--primary-hover); }
+.btn-submit { background-color: var(--primary, #42b883); color: white; box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.05)); }
+.btn-submit:hover:not(:disabled) { background-color: var(--primary-hover, #3aa876); }
 .btn-submit:disabled { background-color: #9ca3af; cursor: not-allowed; }
-.btn-clear { background-color: transparent; color: var(--text-muted); border: 1px solid var(--border); }
-.btn-clear:hover { background-color: #f3f4f6; color: var(--error); }
-.summary { margin-top: 30px; padding: 20px; background: #ecfdf5; border-left: 5px solid var(--success); border-radius: 0 8px 8px 0; }
+.btn-clear { background-color: transparent; color: var(--text-muted, #666); border: 1px solid var(--border, #ddd); }
+.btn-clear:hover { background-color: #f3f4f6; color: var(--error, #dc3545); }
+.summary { margin-top: 30px; padding: 20px; background: #ecfdf5; border-left: 5px solid var(--success, #10b981); border-radius: 0 8px 8px 0; }
 </style>

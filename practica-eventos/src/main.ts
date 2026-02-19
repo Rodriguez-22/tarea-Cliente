@@ -1,5 +1,9 @@
-import { createApp } from 'vue'
-import './style.css'
-import App from './App.vue'
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import App from './App.vue';
+import './style.css'; // Si tienes estilos globales
 
-createApp(App).mount('#app')
+const app = createApp(App);
+
+app.use(createPinia()); // ¡Esto es vital para que el store funcione!
+app.mount('#app');
